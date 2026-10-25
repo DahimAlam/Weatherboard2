@@ -1,4 +1,12 @@
-# Prompt history
+# WeatherBoard — AI Prompt History
+
+This document separates **the original Lovable prompts** (Phases 1–2) from the subsequent **Antigravity-assisted audit and implementation record** (Phase 3). The Lovable prompt text is preserved verbatim and in chronological order. The Phase 3 section records the audit instruction and reported work; it is **not** a Lovable prompt and should not be mistaken for one.
+
+The Phase 3 notification implementation uses a browser timer, **not** true scheduled Web Push after the tab closes. See [README.md](README.md#notifications) for the explicit limitation and engineering trade-off.
+
+---
+
+## Original Lovable prompts — chronological record
 
 ## 1. Phase 1 — Premium weather experience
 
@@ -443,7 +451,7 @@ At the end, report:
 Begin by auditing the existing implementation, then implement and verify the missing functionality.
 
 
-## 3. Phase 3 (Antigravity QA & Completion) — Audit, PWA, Notification Dispatch & Documentation
+## 3. Post-Lovable: Antigravity-assisted audit and implementation (not a Lovable prompt)
 
 ```
 /plan
