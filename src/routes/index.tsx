@@ -49,22 +49,29 @@ function Index() {
   const [storageError, setStorageError] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
 
+  const reqId = useRef(0);
+  const lastCity = useRef<City>(DEFAULT);
   const load = useCallback(async (city: City) => {
+    const id = ++reqId.current;
+    lastCity.current = city;
     setLoading(true);
     setError(null);
     try {
       const w = await fetchWeather(city);
+      if (id !== reqId.current) return; // a newer request won
       setWeather(w);
       setFromCache(false);
       cacheWeather(w);
-    } catch {
+    } catch (e) {
+      if (id !== reqId.current) return;
       const c = readCache();
       if (c && c.city.id === city.id) {
         setWeather(c);
         setFromCache(true);
-      } else setError("We couldn't reach the weather service. Check your connection and try again.");
+      }
+      setError(errorMessage(e));
     } finally {
-      setLoading(false);
+      if (id === reqId.current) setLoading(false);
     }
   }, []);
 
