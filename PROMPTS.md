@@ -441,3 +441,70 @@ At the end, report:
 **Implement Phase 2 only. Do not start PWA, notifications, or additional redesign work.**
 
 Begin by auditing the existing implementation, then implement and verify the missing functionality.
+
+
+## 3. Phase 3 (Antigravity QA & Completion) — Audit, PWA, Notification Dispatch & Documentation
+
+```
+/plan
+You are a senior React and TypeScript engineer reviewing my existing WeatherBoard frontend hiring challenge.
+
+PROJECT: Weatherboard2
+
+TASK: AUDIT AND PLAN ONLY. DO NOT MODIFY ANY FILES.
+
+Inspect the existing repository and compare its implementation against the following requirements:
+
+1. OpenWeatherMap as the primary weather API.
+2. Open-Meteo as the fallback provider.
+3. GeoDB Cities autocomplete with a 300ms debounce.
+4. Real current weather and five-day forecast.
+5. Client-side validation on blur and submit.
+6. Maximum five favourite cities persisted in localStorage, with confirmation before removal.
+7. Installable PWA with manifest, 192px/512px icons, service worker and offline caching of the last-viewed city's weather.
+8. Morning notification permission flow and configurable reminder time, including browser limitations.
+9. Responsive layouts at 375px, 768px and 1280px.
+10. README.md and complete actual Lovable prompt history in PROMPTS.md.
+
+INSTRUCTIONS:
+- Preserve the existing premium UI.
+- Inspect only relevant source files.
+- Do not scan node_modules, dist or build output.
+- Do not install packages.
+- Do not edit any files.
+- Mark every requirement COMPLETE, PARTIAL or MISSING.
+- Include supporting file paths.
+- Identify the three highest-priority remaining tasks.
+- Estimate remaining development time.
+- Provide a concise phase-by-phase implementation plan.
+
+STOP after the audit and wait for my approval before making changes.
+```
+
+### Audit results (approved, then implemented)
+
+**Status at start of Phase 3:**
+
+| Req | Status |
+|---|---|
+| 1 — OWM primary | COMPLETE |
+| 2 — Open-Meteo fallback | COMPLETE |
+| 3 — GeoDB autocomplete + 300ms debounce | COMPLETE |
+| 4 — Real weather + 5-day forecast | COMPLETE |
+| 5 — Validation on blur + submit | COMPLETE |
+| 6 — Max 5 favs + localStorage + confirm | COMPLETE |
+| 7 — PWA (manifest, icons, SW, offline cache) | MISSING |
+| 8 — Morning notification + configurable time | PARTIAL (UI only, no dispatch) |
+| 9 — Responsive layouts | COMPLETE |
+| 10 — README + PROMPTS | PARTIAL |
+
+**Changes made in Phase 3:**
+
+- `public/manifest.json` — new PWA web app manifest (name, icons, display:standalone, theme)
+- `public/icon-192.svg` — new 192×192 SVG PWA icon (CloudSun on midnight navy)
+- `public/icon-512.svg` — new 512×512 SVG PWA icon
+- `public/sw.js` — new hand-written service worker (shell install, NetworkFirst for weather APIs, StaleWhileRevalidate for fonts, navigation fallback to cached `/`)
+- `src/routes/__root.tsx` — added `<link rel="manifest">`, `<link rel="apple-touch-icon">`, and SW registration `useEffect`
+- `src/routes/index.tsx` — added notification dispatch `useEffect` in `Reminders`: calculates ms until next reminder time, schedules `new Notification(...)` via `setTimeout`, cleans up on unmount or state change
+- `README.md` — full rewrite: setup, architecture, API providers, PWA, notifications, known limitations, scripts, deployment
+- `PROMPTS.md` — this entry appended

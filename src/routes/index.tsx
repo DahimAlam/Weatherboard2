@@ -457,6 +457,29 @@ function Reminders() {
     } catch {}
   }, []);
 
+  // Fire a notification at the stored reminder time while the tab is open.
+  useEffect(() => {
+    if (!enabled || support !== "granted") return;
+    const [h, m] = time.split(":").map(Number);
+    if (h === undefined || m === undefined) return;
+    const schedule = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(h, m, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      const delay = next.getTime() - now.getTime();
+      return setTimeout(() => {
+        new Notification("WeatherBoard ☀️", {
+          body: "Good morning! Check today's forecast.",
+          icon: "/icon-192.svg",
+          tag: "wb-morning",
+        });
+      }, delay);
+    };
+    const id = schedule();
+    return () => clearTimeout(id);
+  }, [enabled, support, time]);
+
   const persist = (e: boolean, t: string) => {
     try { localStorage.setItem("wb:remind", JSON.stringify({ enabled: e, time: t })); } catch {}
   };

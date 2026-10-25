@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <radialGradient id="g1" cx="30%" cy="20%" r="70%">
+      <stop offset="0" stop-color="#123C69" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#071525"/>
+    </radialGradient>
+    <clipPath id="round">
+      <rect width="192" height="192" rx="40"/>
+    </clipPath>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="#071525"/>
+  <rect width="192" height="192" rx="40" fill="url(#g1)"/>
+  <!-- Sun -->
+  <circle cx="118" cy="68" r="20" fill="#FFD58A"/>
+  <line x1="118" y1="42" x2="118" y2="52" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="118" y1="84" x2="118" y2="94" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="94" y1="68" x2="104" y2="68" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="132" y1="68" x2="142" y2="68" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="101" y1="51" x2="108" y2="58" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="128" y1="78" x2="135" y2="85" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="101" y1="85" x2="108" y2="78" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="128" y1="58" x2="135" y2="51" stroke="#FFD58A" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cloud body -->
+  <ellipse cx="88" cy="112" rx="52" ry="34" fill="#A7E8FF" opacity="0.92"/>
+  <ellipse cx="68" cy="100" rx="32" ry="28" fill="#A7E8FF" opacity="0.92"/>
+  <ellipse cx="100" cy="94" rx="28" ry="24" fill="#A7E8FF" opacity="0.92"/>
+</svg>
