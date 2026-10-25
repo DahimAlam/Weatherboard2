@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import sky from "@/assets/sky.jpg";
 import {
-  cacheWeather, describe, fetchWeather, readCache, searchCities, toUnit,
+  cacheWeather, describe, errorMessage, fetchWeather, readCache, searchCities, searchProvider, toUnit,
   type City, type Kind, type Weather,
 } from "@/lib/weather";
 
