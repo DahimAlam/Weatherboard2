@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import sky from "@/assets/sky.jpg";
 import {
-  cacheWeather, describe, fetchWeather, readCache, searchCities, toUnit,
+  cacheWeather, describe, errorMessage, fetchWeather, readCache, searchCities, searchProvider, toUnit,
   type City, type Kind, type Weather,
 } from "@/lib/weather";
 
@@ -49,22 +49,29 @@ function Index() {
   const [storageError, setStorageError] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
 
+  const reqId = useRef(0);
+  const lastCity = useRef<City>(DEFAULT);
   const load = useCallback(async (city: City) => {
+    const id = ++reqId.current;
+    lastCity.current = city;
     setLoading(true);
     setError(null);
     try {
       const w = await fetchWeather(city);
+      if (id !== reqId.current) return; // a newer request won
       setWeather(w);
       setFromCache(false);
       cacheWeather(w);
-    } catch {
+    } catch (e) {
+      if (id !== reqId.current) return;
       const c = readCache();
       if (c && c.city.id === city.id) {
         setWeather(c);
         setFromCache(true);
-      } else setError("We couldn't reach the weather service. Check your connection and try again.");
+      }
+      setError(errorMessage(e));
     } finally {
-      setLoading(false);
+      if (id === reqId.current) setLoading(false);
     }
   }, []);
 
@@ -137,6 +144,12 @@ function Index() {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
+          {error && weather && (
+            <div role="alert" className="glass flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm">
+              <span className="flex items-center gap-2"><AlertTriangle className="size-4 shrink-0 text-sun" />{error} Still showing {weather.city.name}.</span>
+              <button onClick={() => load(lastCity.current)} className="min-h-11 shrink-0 rounded-full px-4 text-primary hover:bg-accent">Retry</button>
+            </div>
+          )}
           {/* HERO */}
           <section className="relative isolate min-h-[440px] overflow-hidden rounded-[2rem] border border-border shadow-glow">
             <img src={sky} alt="" width={1600} height={912} className="animate-drift absolute inset-0 -z-10 size-full object-cover" />
@@ -145,7 +158,7 @@ function Index() {
               <div className="flex min-h-[440px] flex-col items-center justify-center gap-4 p-8 text-center">
                 <AlertTriangle className="size-10 text-sun" />
                 <p className="max-w-sm text-muted-foreground">{error}</p>
-                <button onClick={() => load(DEFAULT)} className="min-h-11 rounded-full bg-primary px-6 font-medium text-primary-foreground">Try again</button>
+                <button onClick={() => load(lastCity.current)} className="min-h-11 rounded-full bg-primary px-6 font-medium text-primary-foreground">Try again</button>
               </div>
             ) : !weather ? (
               <div className="flex min-h-[440px] flex-col justify-end gap-4 p-8">
@@ -181,8 +194,8 @@ function Index() {
                   <WIcon kind={d!.kind} isDay={weather.current.isDay} className="animate-floaty size-28 drop-shadow-2xl sm:size-36" />
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {loading ? <Loader2 className="size-3 animate-spin" /> : <span className={`size-1.5 rounded-full ${fromCache ? "bg-sun" : "bg-primary"}`} />}
-                  {fromCache ? "Saved data" : "Live"} · updated {new Date(weather.fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Open-Meteo
+                  {loading ? <Loader2 className="size-3 animate-spin" /> : <span className={`size-1.5 rounded-full ${fromCache || error ? "bg-sun" : "bg-primary"}`} />}
+                  {fromCache || error ? "Saved data — may be outdated" : "Live"} · updated {new Date(weather.fetchedAt).toLocaleString([], { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })} · {weather.provider}
                 </div>
               </div>
             )}
@@ -311,9 +324,11 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
 
   const validate = () => {
     const t = q.trim();
-    if (t && t.length < 2) setHint("Type at least 2 letters.");
-    else if (t && /[^\p{L}\s'.-]/u.test(t)) setHint("City names use letters only.");
-    else setHint(null);
+    if (!t) return q.length ? (setHint("Enter a city name to search."), false) : (setHint(null), false);
+    if (t.length < 2) return setHint("Type at least 2 letters."), false;
+    if (/[^\p{L}\s'.,-]/u.test(t)) return setHint("City names use letters only."), false;
+    setHint(null);
+    return true;
   };
 
   return (
@@ -322,9 +337,12 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
       role="search"
       onSubmit={(e) => {
         e.preventDefault();
-        validate();
+        if (!q.trim()) return setHint("Enter a city name to search.");
+        if (!validate()) return;
+        if (state === "loading") return setHint("Still searching…");
+        if (state === "error") return setHint("City search is unavailable. Check your connection and retry.");
         if (res[active]) pick(res[active]);
-        else if (q.trim().length >= 2 && state === "done") setHint("No matching city — try another spelling.");
+        else setHint("No matching cities found. Try a different spelling.");
       }}
     >
       <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -332,11 +350,12 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
         value={q}
         onChange={(e) => (setQ(e.target.value), setOpen(true), setHint(null))}
         onFocus={() => setOpen(true)}
-        onBlur={() => (setTimeout(() => setOpen(false), 150), validate())}
+        onBlur={() => (setTimeout(() => setOpen(false), 150), q && validate())}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") e.preventDefault(), setActive((a) => Math.min(a + 1, res.length - 1));
           if (e.key === "ArrowUp") e.preventDefault(), setActive((a) => Math.max(a - 1, 0));
           if (e.key === "Escape") setOpen(false);
+          if (e.key === "Enter" && open && res[active]) e.preventDefault(), pick(res[active]);
         }}
         placeholder="Search a city…"
         aria-label="Search city"
@@ -344,16 +363,18 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
         role="combobox"
         aria-expanded={open && res.length > 0}
         aria-controls="city-list"
+        aria-autocomplete="list"
+        aria-activedescendant={open && res[active] ? `city-${res[active]!.id}` : undefined}
         className="glass h-12 w-full rounded-full pl-11 pr-10 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-4 focus:ring-primary/15"
       />
       {state === "loading" && <Loader2 className="absolute right-4 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
       {hint && <p className="mt-1.5 pl-4 text-xs text-destructive">{hint}</p>}
       {open && q.trim().length >= 2 && state !== "loading" && state !== "idle" && (
         <ul id="city-list" role="listbox" className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-glow">
-          {state === "error" && <li className="px-4 py-3 text-sm text-muted-foreground">Search is unavailable right now.</li>}
-          {state === "done" && res.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">No cities found.</li>}
+          {state === "error" && <li className="px-4 py-3 text-sm text-muted-foreground">City search failed. Check your connection and try again.</li>}
+          {state === "done" && res.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">No matching cities found. Try a different spelling.</li>}
           {res.map((c, i) => (
-            <li key={c.id} role="option" aria-selected={i === active}>
+            <li key={c.id} id={`city-${c.id}`} role="option" aria-selected={i === active}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
@@ -366,6 +387,7 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
               </button>
             </li>
           ))}
+          <li className="px-3 pb-1 pt-2 text-[11px] text-muted-foreground">Search by {searchProvider()}</li>
         </ul>
       )}
     </form>
@@ -373,10 +395,10 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
 }
 
 function Favourites(p: {
-  favs: City[]; activeId?: number | undefined; storageError: boolean; canAdd: boolean;
-  onPick: (c: City) => void; onAdd: () => void; onRemove: (id: number) => void;
+  favs: City[]; activeId?: number | string | undefined; storageError: boolean; canAdd: boolean;
+  onPick: (c: City) => void; onAdd: () => void; onRemove: (id: number | string) => void;
 }) {
-  const [confirm, setConfirm] = useState<number | null>(null);
+  const [confirm, setConfirm] = useState<number | string | null>(null);
   return (
     <section className="glass rounded-3xl p-5">
       <div className="mb-4 flex items-center justify-between">
