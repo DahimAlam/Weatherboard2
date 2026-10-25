@@ -108,14 +108,22 @@ To install: open the app in Chrome or Edge and click the install icon in the add
 
 ## Notifications
 
-WeatherBoard includes a morning reminder feature:
+WeatherBoard provides an opt-in daily morning weather reminder with a user-configurable reminder time.
 
-- Tap the toggle in the **Morning reminder** card to enable. The browser will prompt for notification permission on first enable.
-- Pick a reminder time with the time picker.
-- **While the tab is open**, a browser notification fires at the configured time.
-- **When the tab is closed**, notifications cannot be delivered — the app has no push server. This limitation is disclosed in the UI.
+### Current behavior
 
-Permission states handled: `unsupported`, `default` (prompt), `granted`, `denied` (with instructions to re-enable in browser settings).
+- Enable the **Morning reminder** toggle and choose a reminder time.
+- The app requests notification permission through the browser. Unsupported or denied permissions do not prevent weather, search, favourites, or offline features from working.
+- Reminders are implemented using the browser Notification API and an in-page JavaScript timer. They are **best-effort while the WeatherBoard page remains active**; background tabs may be throttled or suspended.
+- **Notifications do not reliably fire after the WeatherBoard tab or app is closed.** The current implementation does not include Web Push subscription handling, a service-worker `push` event listener, or a server-side scheduler. Installing the PWA or deploying over HTTPS does not fix this limitation by itself.
+
+### Why closed-tab scheduling is not included
+
+The challenge specifies both **"client-side only — no backend to write"** and **daily push notifications even when the tab is closed**. These requirements are in tension: browsers do not provide a broadly supported, reliable client-only mechanism to wake a closed page or service worker at an arbitrary daily time. Service workers are event-driven and cannot be kept alive by a persistent `setTimeout`.
+
+A production solution would register a Web Push subscription, persist its endpoint and each user's preferred time/timezone on a backend, trigger a scheduled push via a server or managed push provider, and handle the resulting `push` event with `ServiceWorkerRegistration.showNotification()`. Delivery remains subject to user consent, browser and operating-system support, and device connectivity. This backend-dependent architecture was **not implemented**, in order to respect the stated client-only project scope.
+
+**Requirement status:** The configurable, opt-in reminder UI works in a running page, but the challenge's explicit **closed-tab daily notification requirement remains unmet**. This is a disclosed functional limitation, not a completed Web Push implementation.
 
 ---
 
@@ -146,7 +154,7 @@ public/
 
 - **OWM free forecast is 3-hourly**: daily min/max are aggregated by iterating the 40 three-hourly slots and taking the local-timezone date boundary. Edge timezone cases may cause ±1 day drift.
 - **GeoDB free tier rate-limit**: ~1 request/second. Rapid typing is debounced (300 ms) and stale requests are aborted to stay within limits.
-- **Notifications are tab-only**: There is no push server or Service Worker push event. Reminders only fire while WeatherBoard is open in a browser tab.
+- **Closed-tab reminders are not implemented**: The page uses an in-memory timer and does not include a Web Push subscription, service-worker push handler, or scheduler. Background tabs can also throttle timers. See [Notifications](#notifications) for the challenge-scope trade-off.
 - **SW cache invalidation**: The hand-written SW uses named cache buckets (`wb-shell-v1`, `wb-api-v1`). Increment the version string in `public/sw.js` on each deploy that changes static assets.
 
 ---
