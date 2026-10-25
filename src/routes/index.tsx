@@ -380,10 +380,10 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
 }
 
 function Favourites(p: {
-  favs: City[]; activeId?: number | undefined; storageError: boolean; canAdd: boolean;
-  onPick: (c: City) => void; onAdd: () => void; onRemove: (id: number) => void;
+  favs: City[]; activeId?: number | string | undefined; storageError: boolean; canAdd: boolean;
+  onPick: (c: City) => void; onAdd: () => void; onRemove: (id: number | string) => void;
 }) {
-  const [confirm, setConfirm] = useState<number | null>(null);
+  const [confirm, setConfirm] = useState<number | string | null>(null);
   return (
     <section className="glass rounded-3xl p-5">
       <div className="mb-4 flex items-center justify-between">
