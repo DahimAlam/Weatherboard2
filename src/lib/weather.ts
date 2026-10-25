@@ -21,9 +21,9 @@ export type Weather = {
   daily: { date: string; code: number; max: number; min: number }[];
 };
 
-export async function searchCities(q: string, signal?: AbortSignal): Promise<City[]> {
+export async function searchCities(q: string, signal?: AbortSignal | undefined): Promise<City[]> {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`;
-  const r = await fetch(url, { signal });
+  const r = await fetch(url, signal ? { signal } : {});
   if (!r.ok) throw new Error("City search failed");
   const j = await r.json();
   return (j.results ?? []).map((c: any) => ({

@@ -28,7 +28,7 @@ const DEFAULT: City = { id: 2643743, name: "London", country: "United Kingdom", 
 const FAV_KEY = "wb:favs";
 const MAX_FAVS = 5;
 
-function WIcon({ kind, isDay = true, className }: { kind: Kind; isDay?: boolean; className?: string }) {
+function WIcon({ kind, isDay = true, className }: { kind: Kind; isDay?: boolean; className?: string | undefined }) {
   const map = {
     clear: isDay ? Sun : Moon, partly: CloudSun, cloudy: Cloud, fog: CloudFog,
     rain: CloudRain, snow: Snowflake, storm: CloudLightning,
@@ -239,7 +239,7 @@ function Index() {
   );
 }
 
-function UnitToggle({ unit, setUnit, className }: { unit: "C" | "F"; setUnit: (u: "C" | "F") => void; className?: string }) {
+function UnitToggle({ unit, setUnit, className }: { unit: "C" | "F"; setUnit: (u: "C" | "F") => void; className?: string | undefined }) {
   return (
     <div className={`glass flex rounded-full p-1 ${className ?? ""}`} role="group" aria-label="Temperature unit">
       {(["C", "F"] as const).map((u) => (
@@ -373,7 +373,7 @@ function CitySearch({ onSelect }: { onSelect: (c: City) => void }) {
 }
 
 function Favourites(p: {
-  favs: City[]; activeId?: number; storageError: boolean; canAdd: boolean;
+  favs: City[]; activeId?: number | undefined; storageError: boolean; canAdd: boolean;
   onPick: (c: City) => void; onAdd: () => void; onRemove: (id: number) => void;
 }) {
   const [confirm, setConfirm] = useState<number | null>(null);
